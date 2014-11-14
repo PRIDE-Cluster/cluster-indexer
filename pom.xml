@@ -39,6 +39,11 @@
         <url>http://www.ebi.ac.uk</url>
     </organization>
 
+    <properties>
+        <ontology.index.search.version>0.1.1</ontology.index.search.version>
+        <cluster.search.version>1.0-SNAPSHOT</cluster.search.version>
+    </properties>
+
     <build>
         <resources>
             <!-- regular resources -->
@@ -111,6 +116,62 @@
             </plugin>
         </plugins>
     </build>
+
+    <dependencies>
+
+        <!-- cluster-index-search -->
+        <dependency>
+            <groupId>uk.ac.ebi.pride.cluster</groupId>
+            <artifactId>cluster-search</artifactId>
+            <version>${cluster.search.version}</version>
+        </dependency>
+
+        <!-- ontology-index-search -->
+        <dependency>
+            <groupId>uk.ac.ebi.pride.archive</groupId>
+            <artifactId>ontology-index-search</artifactId>
+            <version>${ontology.index.search.version}</version>
+        </dependency>
+
+        <!-- spring-data solr-->
+        <dependency>
+            <groupId>org.springframework.data</groupId>
+            <artifactId>spring-data-solr</artifactId>
+        </dependency>
+
+        <!--Cluster repo-->
+        <dependency>
+            <groupId>uk.ac.ebi.pride.spectracluster</groupId>
+            <artifactId>spectra-cluster-repo</artifactId>
+            <version>1.0.1-SNAPSHOT</version>
+        </dependency>
+
+        <!--Data source dependencies-->
+        <!-- oracle jdbc driver -->
+        <dependency>
+            <groupId>com.oracle</groupId>
+            <artifactId>oracle-thin</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--logging-->
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>jcl-over-slf4j</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>ch.qos.logback</groupId>
+            <artifactId>logback-classic</artifactId>
+        </dependency>
+    </dependencies>
 
     <repositories>
         <repository> <!-- EBI repo -->
