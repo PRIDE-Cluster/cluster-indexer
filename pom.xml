@@ -66,7 +66,26 @@
         </resources>
 
         <plugins>
-            <plugin> <!-- maven dependency plugin -->
+            <!--assembly to zip-->
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptors>
+                        <descriptor>${project.basedir}/assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <!-- maven dependency plugin -->
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
@@ -85,33 +104,25 @@
                     </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
-            </plugin>
-
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-release-plugin</artifactId>
-                <version>2.2.1</version>
-                <configuration>
-                    <remoteTagging>true</remoteTagging>
-                    <goals>deploy</goals>
-                </configuration>
-            </plugin>
-
             <!--jar-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <!--NOTE: you must have this version number, otherwise, the build will not be able to find Validator-->
-                <!--<version>2.4</version>-->
+                <version>2.4</version>
                 <configuration>
                     <excludes>
                         <exclude>**/test</exclude>
                         <exclude>**/test/*.class</exclude>
                     </excludes>
+                    <archive>
+                        <manifest>
+                            <mainClass>uk.ac.ebi.pride.cluster.indexer.tools.ClusterIndexBuilder</mainClass>
+                            <addClasspath>true</addClasspath>
+                            <classpathPrefix>lib</classpathPrefix>
+                            <useUniqueVersions>false</useUniqueVersions>
+                        </manifest>
+                    </archive>
                 </configuration>
             </plugin>
         </plugins>
