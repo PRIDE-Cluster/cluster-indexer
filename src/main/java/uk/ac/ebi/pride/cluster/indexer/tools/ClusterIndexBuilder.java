@@ -5,7 +5,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
 import uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService;
-import uk.ac.ebi.pride.cluster.indexer.ClusterIndexer;
+import uk.ac.ebi.pride.cluster.indexer.ClusterIndexerDB;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
 import uk.ac.ebi.pride.spectracluster.repo.dao.IClusterReadDao;
@@ -52,25 +52,25 @@ public class ClusterIndexBuilder {
 
     private static void indexNonExistingClusters(ClusterIndexBuilder clusterIndexBuilder) {
 
-        ClusterIndexer clusterIndexer = new ClusterIndexer(
+        ClusterIndexerDB clusterIndexerDB = new ClusterIndexerDB(
                 clusterIndexBuilder.clusterSearchService,
                 clusterIndexBuilder.clusterIndexService,
                 clusterIndexBuilder.clusterReadDao,
                 clusterIndexBuilder.ontologyTermSearchService
         );
 
-        clusterIndexer.indexNonExistingClusters();
+        clusterIndexerDB.indexNonExistingClusters();
     }
 
     public static void indexClusters(ClusterIndexBuilder clusterIndexBuilder) {
 
-        ClusterIndexer clusterIndexer = new ClusterIndexer(
+        ClusterIndexerDB clusterIndexerDB = new ClusterIndexerDB(
                 clusterIndexBuilder.clusterSearchService,
                 clusterIndexBuilder.clusterIndexService,
                 clusterIndexBuilder.clusterReadDao,
                 clusterIndexBuilder.ontologyTermSearchService
         );
 
-        clusterIndexer.indexAllClusters();
+        clusterIndexerDB.indexAllClusters();
     }
 }
