@@ -41,7 +41,7 @@
 
     <properties>
         <ontology.index.search.version>0.1.1</ontology.index.search.version>
-        <cluster.search.version>1.0-SNAPSHOT</cluster.search.version>
+        <cluster.search.version>0.1.0-SNAPSHOT</cluster.search.version>
     </properties>
 
     <build>
@@ -130,10 +130,36 @@
                     </archive>
                 </configuration>
             </plugin>
+
+            <!--assembly to zip-->
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptors>
+                        <descriptor>${project.basedir}/assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
+
+        <!--WS client-->
+        <dependency>
+            <groupId>uk.ac.ebi.pride.cluster</groupId>
+            <artifactId>cluster-ws-client</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
 
         <!-- cluster-index-search -->
         <dependency>
@@ -199,6 +225,16 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+
+        <repository>
+            <id>cluster-ws-client-java-mvn-repo</id>
+            <url>https://raw.github.com/PRIDE-Cluster/cluster-ws-client-java/mvn-repo/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+
     </repositories>
 
 </project>

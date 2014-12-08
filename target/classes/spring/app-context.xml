@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:bean="http://www.springframework.org/schema/context"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+                           http://www.springframework.org/schema/beans/spring-beans.xsd
+                           http://www.springframework.org/schema/context
+                           http://www.springframework.org/schema/context/spring-context-3.1.xsd">
+
+    <context:annotation-config />
+
+    <bean:component-scan base-package="uk.ac.ebi.pride.cluster.indexer"/>
+    <bean:component-scan base-package="uk.ac.ebi.pride.cluster.search"/>
+    <bean:component-scan base-package="uk.ac.ebi.pride.archive.ontology"/>
+
+    <!--Solr Servers-->
+    <bean id="solrClusterServer" class="org.apache.solr.client.solrj.impl.HttpSolrServer">
+        <constructor-arg name="baseURL" value="${solr.server.cluster.core.url}" />
+    </bean>
+
+    <bean id="solrOntologyServer" class="org.apache.solr.client.solrj.impl.HttpSolrServer">
+        <constructor-arg name="baseURL" value="${solr.server.ontology.core.url}" />
+    </bean>
+
+
+    <!--Solr Templates-->
+    <bean id="solrOntologyTemplate" class="org.springframework.data.solr.core.SolrTemplate">
+        <constructor-arg name="solrServer" ref="solrOntologyServer"/>
+    </bean>
+
+    <bean id="solrClusterTemplate" class="org.springframework.data.solr.core.SolrTemplate">
+        <constructor-arg name="solrServer" ref="solrClusterServer"/>
+    </bean>
+
+    <!--Solr Factories-->
+    <bean id="solrOntologyTermRepositoryFactory" class="uk.ac.ebi.pride.archive.ontology.search.repository.SolrOntologyTermRepositoryFactory">
+        <constructor-arg ref="solrOntologyTemplate"/>
+    </bean>
+
+    <bean id="solrClusterRepositoryFactory" class="uk.ac.ebi.pride.cluster.search.service.repository.SolrClusterRepositoryFactory">
+        <constructor-arg ref="solrClusterTemplate"/>
+    </bean>
+
+    <!-- Search Services -->
+    <bean id="ontologyTermSearchService" class="uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService">
+        <constructor-arg value="#{ solrOntologyTermRepositoryFactory.create() }"/>
+    </bean>
+
+    <bean id="clusterSearchService" class="uk.ac.ebi.pride.cluster.search.service.ClusterSearchService">
+        <constructor-arg value="#{ solrClusterRepositoryFactory.create() }"/>
+    </bean>
+
+    <bean id="clusterIndexService" class="uk.ac.ebi.pride.cluster.search.service.ClusterIndexService">
+        <constructor-arg value="#{ solrClusterRepositoryFactory.create() }"/>
+    </bean>
+
+
+    <bean class="uk.ac.ebi.pride.spectracluster.repo.dao.ClusterReader" id="clusterReaderDao">
+        <constructor-arg ref="clusterDataSource"/>
+    </bean>
+
+    <!--Setup data source using place holder properties-->
+    <bean id="clusterDataSource" class="org.apache.commons.dbcp.BasicDataSource" destroy-method="close">
+        <property name="driverClassName" value="${pride.jdbc.driver}"/>
+        <property name="url" value="${pride.jdbc.url}"/>
+        <property name="username" value="${pride.cluster.jdbc.user}"/>
+        <property name="password" value="${pride.cluster.jdbc.password}"/>
+        <property name="maxActive" value="50"/>
+        <property name="maxIdle" value="25"/>
+        <property name="minIdle" value="1"/>
+        <property name="initialSize" value="1"/>
+        <property name="minEvictableIdleTimeMillis" value="60000"/>
+        <property name="timeBetweenEvictionRunsMillis" value="60000"/>
+        <property name="numTestsPerEvictionRun" value="3"/>
+        <property name="maxWait" value="10000"/>
+        <property name="testOnBorrow" value="true"/>
+        <property name="testWhileIdle" value="true"/>
+        <property name="testOnReturn" value="false"/>
+        <property name="validationQuery" value="SELECT 1 FROM dual"/>
+        <!-- Oracle validation query -->
+    </bean>
+
+    <!-- property files -->
+    <context:property-placeholder location="classpath:props/*.properties" ignore-unresolvable="true"/>
+
+</beans>
