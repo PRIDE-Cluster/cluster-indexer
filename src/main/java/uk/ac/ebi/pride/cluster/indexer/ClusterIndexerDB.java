@@ -4,6 +4,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.pride.archive.ontology.model.OntologyTerm;
 import uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService;
+import uk.ac.ebi.pride.cluster.search.model.ClusterQuality;
 import uk.ac.ebi.pride.cluster.search.model.SolrCluster;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
@@ -225,7 +226,27 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setSpeciesAscendantsAccessions(new ArrayList<String>(speciesDescendantsAccessions));
         solrCluster.setSpeciesAscendantsNames(new ArrayList<String>(speciesDescendantsNames));
 
+        // consensus spectrum
+        if (solrCluster.getClusterQuality()== ClusterQuality.HIGH) {
+            setConsensusSpectrum(solrCluster, clusterSummary);
+        }
+
         return solrCluster;
+
+    }
+
+    public void setConsensusSpectrum(SolrCluster solrCluster, ClusterSummary repoCluster) {
+
+        String[] peaksMz = repoCluster.getConsensusSpectrumMz().split(",");
+        String[] peaksIntensities = repoCluster.getConsensusSpectrumIntensity().split(",");
+        int i = 0;
+        solrCluster.setConsensusSpectrumMz(new LinkedList<Double>());
+        solrCluster.setConsensusSpectrumIntensity(new LinkedList<Double>());
+        for (String peak : peaksMz) {
+            solrCluster.getConsensusSpectrumMz().add(Double.parseDouble(peak));
+            solrCluster.getConsensusSpectrumIntensity().add(Double.parseDouble(peaksIntensities[i]));
+            i++;
+        }
 
     }
 }

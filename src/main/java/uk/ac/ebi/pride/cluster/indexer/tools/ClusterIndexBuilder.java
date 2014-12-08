@@ -12,6 +12,7 @@ import uk.ac.ebi.pride.spectracluster.repo.dao.IClusterReadDao;
 
 /**
  * @author ntoro
+ * @author Jose A. Dianes <jadianes@gmail.com>
  * @since 14/11/14 14:29
  */
 
