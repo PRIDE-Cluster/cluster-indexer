@@ -4,14 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.pride.archive.ontology.model.OntologyTerm;
 import uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService;
-import uk.ac.ebi.pride.cluster.search.model.ClusterQuality;
 import uk.ac.ebi.pride.cluster.search.model.SolrCluster;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
 import uk.ac.ebi.pride.cluster.search.util.QualityAssigner;
 import uk.ac.ebi.pride.spectracluster.repo.dao.IClusterReadDao;
 import uk.ac.ebi.pride.spectracluster.repo.model.AssayDetail;
-import uk.ac.ebi.pride.spectracluster.repo.model.ClusterSummary;
+import uk.ac.ebi.pride.spectracluster.repo.model.ClusterDetail;
 import uk.ac.ebi.pride.spectracluster.repo.model.ClusteredPSMDetail;
 import uk.ac.ebi.pride.spectracluster.repo.model.PSMDetail;
 import uk.ac.ebi.pride.spectracluster.repo.utils.paging.Page;
@@ -44,7 +43,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
     }
 
     public void indexCluster(long clusterId){
-        SolrCluster cluster = asSolrCluster(clusterReadDao.findCluster(clusterId));
+        SolrCluster cluster = asSolrCluster(clusterId);
         clusterIndexService.save(cluster);
     }
 
@@ -53,7 +52,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         List<SolrCluster> clusters = new ArrayList<SolrCluster>(clusterIds.size());
 
         for (Long clusterId : clusterIds) {
-            clusters.add(asSolrCluster(clusterReadDao.findCluster(clusterId)));
+            clusters.add(asSolrCluster(clusterId));
         }
 
         clusterIndexService.save(clusters);
@@ -63,7 +62,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
         List<SolrCluster> clusters;
         long count = 0;
-        int page = 0;
+        int page = 1;
         long numClusters = clusterReadDao.getNumberOfClusters();
 
         long startTime;
@@ -74,14 +73,14 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
         clusterIndexService.deleteAll();
 
-        Page<ClusterSummary> clusterSummaryPage;
+        Page<Long> clusterIds;
         while (count < numClusters) {
-            clusterSummaryPage = clusterReadDao.getAllClusterSummaries(page++, PAGE_SIZE);
-            clusters = asSolrCluster(clusterSummaryPage.getPageItems());
+            clusterIds = clusterReadDao.getAllClusterIds(page++, PAGE_SIZE);
+            clusters = asSolrCluster(clusterIds.getPageItems());
             clusterIndexService.save(clusters);
             logger.debug("COMMITTED " + clusters.size() + " clusters.");
 
-            count += clusterSummaryPage.getPageItems().size();
+            count += clusterIds.getPageItems().size();
         }
 
         endTime = System.currentTimeMillis();
@@ -102,21 +101,21 @@ public class ClusterIndexerDB implements IClusterIndexer {
         // add all CLUSTERs to index
         startTime = System.currentTimeMillis();
 
-        Page<ClusterSummary> clusterSummaryPage;
+        Page<Long> clusterIds;
         while (count < numClusters) {
-            clusterSummaryPage = clusterReadDao.getAllClusterSummaries(page++, PAGE_SIZE);
+            clusterIds = clusterReadDao.getAllClusterIds(page++, PAGE_SIZE);
 
-            for (ClusterSummary clusterSummary : clusterSummaryPage.getPageItems()) {
-                if(!clusterSearchService.existsCluster(clusterSummary.getId())){
-                    clusters.add(asSolrCluster(clusterSummary));
+            for (Long clusterId : clusterIds.getPageItems()) {
+                if(!clusterSearchService.existsCluster(clusterId)){
+                    clusters.add(asSolrCluster(clusterId));
                 } else {
-                    logger.info("Cluster " + clusterSummary.getId() + " already in the index. SKIPPING...");
+                    logger.info("Cluster " + clusterIds + " already in the index. SKIPPING...");
                 }
             }
             clusterIndexService.save(clusters);
             logger.debug("COMMITTED " + clusters.size() + " clusters.");
 
-            count += clusterSummaryPage.getPageItems().size();
+            count += clusterIds.getPageItems().size();
         }
 
         endTime = System.currentTimeMillis();
@@ -124,28 +123,29 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
     }
 
-    private List<SolrCluster> asSolrCluster(List<ClusterSummary> clusterSummaries) {
+    private List<SolrCluster> asSolrCluster(List<Long> clusterIds) {
         List<SolrCluster> clusters = new ArrayList<SolrCluster>(PAGE_SIZE);
 
-        for (ClusterSummary clusterSummary : clusterSummaries) {
-            clusters.add(asSolrCluster(clusterSummary));
+        for (Long clusterId : clusterIds) {
+            clusters.add(asSolrCluster(clusterId));
         }
 
         return clusters;
 
     }
 
-    private SolrCluster asSolrCluster(ClusterSummary clusterSummary) {
+    private SolrCluster asSolrCluster(Long clusterId) {
 
         String projectAccession;
         String assayAccession;
+        ClusterDetail clusterDetail;
         List<AssayDetail> assayDetails;
 
-        List<String> projects = new ArrayList<String>();
-        List<Long> assaysIds = new ArrayList<Long>();
+        Set<Long> assaysIds = new LinkedHashSet<Long>();
+        Set<String> projects = new LinkedHashSet<String>();
 
-        List<String> speciesNames = new ArrayList<String>();
-        List<String> speciesAccessions = new ArrayList<String>();
+        Set<String> speciesNames = new LinkedHashSet<String>();
+        Set<String> speciesAccessions = new LinkedHashSet<String>();
 
         Set<String> pepSequences = new LinkedHashSet<String>();
         Set<String> proteinAccs = new LinkedHashSet<String>();
@@ -155,42 +155,43 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
         Map<String, List<String>> projectAssays = new HashMap<String, List<String>>();
 
-        SolrCluster solrCluster = new SolrCluster();
-        solrCluster.setId(clusterSummary.getId());
-        solrCluster.setNumberOfSpectra(clusterSummary.getNumberOfSpectra());
-        solrCluster.setAveragePrecursorCharge(clusterSummary.getAveragePrecursorCharge());
-        solrCluster.setAveragePrecursorMz(clusterSummary.getAveragePrecursorMz());
-        solrCluster.setMaxRatio(clusterSummary.getMaxPeptideRatio());
+        clusterDetail = clusterReadDao.findCluster(clusterId);
 
-        List<ClusteredPSMDetail> clusteredPMSDetails = clusterReadDao.findClusteredPSMSummaryByClusterId(clusterSummary.getId());
+        SolrCluster solrCluster = new SolrCluster();
+        solrCluster.setId(clusterDetail.getId());
+        solrCluster.setNumberOfSpectra(clusterDetail.getNumberOfSpectra());
+        solrCluster.setAveragePrecursorCharge(clusterDetail.getAveragePrecursorCharge());
+        solrCluster.setAveragePrecursorMz(clusterDetail.getAveragePrecursorMz());
+        solrCluster.setMaxRatio(clusterDetail.getMaxPeptideRatio());
+
+        List<ClusteredPSMDetail> clusteredPSMSummaries = clusterDetail.getClusteredPSMSummaries();
 
         //Highest rank peptides and protein accessions
-        for (ClusteredPSMDetail clusteredPSMDetail : clusteredPMSDetails) {
+        for (ClusteredPSMDetail clusteredPSMDetail : clusteredPSMSummaries) {
             if (clusteredPSMDetail.getRank() == 1) {
                 PSMDetail psmDetail = clusteredPSMDetail.getPsmDetail();
                 if (psmDetail != null) {
                     pepSequences.add(psmDetail.getSequence());
                     proteinAccs.add(psmDetail.getProteinAccession());
                     // TODO protein group
-                    // proteinAccs.addAll(psmSummary.getProteinGroup());
+                    // proteinAccs.addAll(psmDetail.getProteinGroup());
                     assaysIds.add(psmDetail.getAssayId());
                 }
             }
         }
 
-        assayDetails = clusterReadDao.findAssays(assaysIds);
+        assayDetails = clusterReadDao.findAssays(new ArrayList<Long>(assaysIds));
 
         //Processing assay information
-        for (AssayDetail repoAssayDetail : assayDetails) {
-            projectAccession = repoAssayDetail.getProjectAccession();
+        for (AssayDetail repoAssay : assayDetails) {
+            projectAccession = repoAssay.getProjectAccession();
             projects.add(projectAccession);
 
-            assayAccession = repoAssayDetail.getAccession();
+            assayAccession = repoAssay.getAccession();
 
             //Species metadata
-            //TODO Multispecies
-            speciesNames.add(repoAssayDetail.getSpecies());
-            speciesAccessions.add(repoAssayDetail.getTaxonomyId());
+            speciesNames.addAll(repoAssay.getSpeciesEntries());
+            speciesAccessions.addAll(repoAssay.getTaxonomyIdEntries());
 
             if (projectAssays.containsKey(projectAccession)) {
                 projectAssays.get(projectAccession).add(assayAccession);
@@ -202,16 +203,17 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setHighestRatioProteinAccessions(proteinAccs);
         solrCluster.setHighestRatioPepSequences(pepSequences);
         solrCluster.setProjectAssays(projectAssays);
-        solrCluster.setProjects(projects);
+        solrCluster.setProjects(new ArrayList<String>(projects));
         solrCluster.setClusterQuality(QualityAssigner.calculateQuality(solrCluster.getNumberOfSpectra(), solrCluster.getMaxRatio()));
 
-        // species
-        solrCluster.setSpeciesNames(speciesNames);
-        solrCluster.setSpeciesAccessions(speciesAccessions);
+        // Expand species
+        solrCluster.setSpeciesNames(new ArrayList<String>(speciesNames));
+        solrCluster.setSpeciesAccessions(new ArrayList<String>(speciesAccessions));
 
+        //TODO Review this part
         for (int i=0; i < speciesAccessions.size(); i++) {
-            String speciesAccession = speciesAccessions.get(i);
-            String speciesName = speciesNames.get(i);
+            String speciesAccession = solrCluster.getSpeciesAccessions().get(i);
+            String speciesName = solrCluster.getSpeciesNames().get(i);
             List<OntologyTerm> relativeSpecies = ontologyTermSearchService.findAllByDescendant(speciesAccession);
             for (OntologyTerm relativeOntologyTerm: relativeSpecies) {
 
@@ -226,27 +228,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setSpeciesAscendantsAccessions(new ArrayList<String>(speciesDescendantsAccessions));
         solrCluster.setSpeciesAscendantsNames(new ArrayList<String>(speciesDescendantsNames));
 
-        // consensus spectrum
-        if (solrCluster.getClusterQuality()== ClusterQuality.HIGH) {
-            setConsensusSpectrum(solrCluster, clusterSummary);
-        }
-
         return solrCluster;
-
-    }
-
-    public void setConsensusSpectrum(SolrCluster solrCluster, ClusterSummary repoCluster) {
-
-        String[] peaksMz = repoCluster.getConsensusSpectrumMz().split(",");
-        String[] peaksIntensities = repoCluster.getConsensusSpectrumIntensity().split(",");
-        int i = 0;
-        solrCluster.setConsensusSpectrumMz(new LinkedList<Double>());
-        solrCluster.setConsensusSpectrumIntensity(new LinkedList<Double>());
-        for (String peak : peaksMz) {
-            solrCluster.getConsensusSpectrumMz().add(Double.parseDouble(peak));
-            solrCluster.getConsensusSpectrumIntensity().add(Double.parseDouble(peaksIntensities[i]));
-            i++;
-        }
 
     }
 }
