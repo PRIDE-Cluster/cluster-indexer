@@ -4,15 +4,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.pride.archive.ontology.model.OntologyTerm;
 import uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService;
+import uk.ac.ebi.pride.cluster.search.model.ClusterQuality;
 import uk.ac.ebi.pride.cluster.search.model.SolrCluster;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
 import uk.ac.ebi.pride.cluster.search.util.QualityAssigner;
 import uk.ac.ebi.pride.spectracluster.repo.dao.IClusterReadDao;
-import uk.ac.ebi.pride.spectracluster.repo.model.AssayDetail;
-import uk.ac.ebi.pride.spectracluster.repo.model.ClusterDetail;
-import uk.ac.ebi.pride.spectracluster.repo.model.ClusteredPSMDetail;
-import uk.ac.ebi.pride.spectracluster.repo.model.PSMDetail;
+import uk.ac.ebi.pride.spectracluster.repo.model.*;
 import uk.ac.ebi.pride.spectracluster.repo.utils.paging.Page;
 
 import java.util.*;
@@ -42,12 +40,12 @@ public class ClusterIndexerDB implements IClusterIndexer {
         this.ontologyTermSearchService = ontologyTermSearchService;
     }
 
-    public void indexCluster(long clusterId){
+    public void indexCluster(long clusterId) {
         SolrCluster cluster = asSolrCluster(clusterId);
         clusterIndexService.save(cluster);
     }
 
-    public void indexClusters(Set<Long> clusterIds){
+    public void indexClusters(Set<Long> clusterIds) {
 
         List<SolrCluster> clusters = new ArrayList<SolrCluster>(clusterIds.size());
 
@@ -58,7 +56,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         clusterIndexService.save(clusters);
     }
 
-    public void indexAllClusters(){
+    public void indexAllClusters() {
 
         List<SolrCluster> clusters;
         long count = 0;
@@ -106,7 +104,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
             clusterIds = clusterReadDao.getAllClusterIds(page++, PAGE_SIZE);
 
             for (Long clusterId : clusterIds.getPageItems()) {
-                if(!clusterSearchService.existsCluster(clusterId)){
+                if (!clusterSearchService.existsCluster(clusterId)) {
                     clusters.add(asSolrCluster(clusterId));
                 } else {
                     logger.info("Cluster " + clusterIds + " already in the index. SKIPPING...");
@@ -211,11 +209,11 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setSpeciesAccessions(new ArrayList<String>(speciesAccessions));
 
         //TODO Review this part
-        for (int i=0; i < speciesAccessions.size(); i++) {
+        for (int i = 0; i < speciesAccessions.size(); i++) {
             String speciesAccession = solrCluster.getSpeciesAccessions().get(i);
             String speciesName = solrCluster.getSpeciesNames().get(i);
             List<OntologyTerm> relativeSpecies = ontologyTermSearchService.findAllByDescendant(speciesAccession);
-            for (OntologyTerm relativeOntologyTerm: relativeSpecies) {
+            for (OntologyTerm relativeOntologyTerm : relativeSpecies) {
 
                 speciesDescendantsAccessions.add(relativeOntologyTerm.getAccession());
                 speciesDescendantsNames.add(relativeOntologyTerm.getName());
@@ -228,7 +226,27 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setSpeciesAscendantsAccessions(new ArrayList<String>(speciesDescendantsAccessions));
         solrCluster.setSpeciesAscendantsNames(new ArrayList<String>(speciesDescendantsNames));
 
+        // consensus spectrum
+        if (solrCluster.getClusterQuality() == ClusterQuality.HIGH) {
+            setConsensusSpectrum(solrCluster, clusterDetail);
+        }
+
         return solrCluster;
+
+    }
+
+    public void setConsensusSpectrum(SolrCluster solrCluster, ClusterSummary repoCluster) {
+
+        String[] peaksMz = repoCluster.getConsensusSpectrumMz().split(",");
+        String[] peaksIntensities = repoCluster.getConsensusSpectrumIntensity().split(",");
+        int i = 0;
+        solrCluster.setConsensusSpectrumMz(new LinkedList<Double>());
+        solrCluster.setConsensusSpectrumIntensity(new LinkedList<Double>());
+        for (String peak : peaksMz) {
+            solrCluster.getConsensusSpectrumMz().add(Double.parseDouble(peak));
+            solrCluster.getConsensusSpectrumIntensity().add(Double.parseDouble(peaksIntensities[i]));
+            i++;
+        }
 
     }
 }
