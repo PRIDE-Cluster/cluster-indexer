@@ -1,5 +1,8 @@
 package uk.ac.ebi.pride.cluster.indexer;
 
+import org.apache.commons.lang3.ArrayUtils;
+import org.apache.commons.math.stat.StatUtils;
+import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.pride.archive.ontology.model.OntologyTerm;
@@ -237,16 +240,37 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
     public void setConsensusSpectrum(SolrCluster solrCluster, ClusterSummary repoCluster) {
 
+        // get the peaks as a string and split them
         String[] peaksMz = repoCluster.getConsensusSpectrumMz().split(",");
         String[] peaksIntensities = repoCluster.getConsensusSpectrumIntensity().split(",");
+        double[] mzStats = new double[peaksMz.length];
+        double[] intensityStats = new double[peaksIntensities.length];
+
+        // iterate and build peak lists while building stats
         int i = 0;
         solrCluster.setConsensusSpectrumMz(new LinkedList<Double>());
         solrCluster.setConsensusSpectrumIntensity(new LinkedList<Double>());
         for (String peak : peaksMz) {
-            solrCluster.getConsensusSpectrumMz().add(Double.parseDouble(peak));
-            solrCluster.getConsensusSpectrumIntensity().add(Double.parseDouble(peaksIntensities[i]));
+            double mzValue = Double.parseDouble(peak);
+            solrCluster.getConsensusSpectrumMz().add(mzValue);
+            mzStats[i] = mzValue;
+
+            double intensityValue = Double.parseDouble(peaksIntensities[i]);
+            solrCluster.getConsensusSpectrumIntensity().add(intensityValue);
+            intensityStats[i] = intensityValue;
+
             i++;
         }
+
+        // set statistics
+        solrCluster.setConsensusSpectrumMzMean(StatUtils.mean(mzStats));
+        solrCluster.setConsensusSpectrumMzSem(StatUtils.variance(mzStats, solrCluster.getConsensusSpectrumMzMean()) / mzStats.length);
+
+        solrCluster.setConsensusSpectrumIntensityMean1(StatUtils.mean(intensityStats, 0, intensityStats.length/4));
+        solrCluster.setConsensusSpectrumIntensityMean2(StatUtils.mean(intensityStats, intensityStats.length/4, intensityStats.length/4));
+        solrCluster.setConsensusSpectrumIntensityMean3(StatUtils.mean(intensityStats, intensityStats.length/2, intensityStats.length/4));
+        solrCluster.setConsensusSpectrumIntensityMean4(StatUtils.mean(intensityStats, (3*intensityStats.length)/4, intensityStats.length/4));
+        solrCluster.setConsensusSpectrumIntensitySem(StatUtils.variance(intensityStats, StatUtils.mean(intensityStats)) / intensityStats.length);
 
     }
 }
