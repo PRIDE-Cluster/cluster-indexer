@@ -263,13 +263,16 @@ public class ClusterIndexerDB implements IClusterIndexer {
         }
 
         // set statistics
-        solrCluster.setConsensusSpectrumMzMean(StatUtils.mean(mzStats));
-        solrCluster.setConsensusSpectrumMzSem(StatUtils.variance(mzStats, solrCluster.getConsensusSpectrumMzMean()) / mzStats.length);
+        solrCluster.setConsensusSpectrumMzMean1(StatUtils.mean(mzStats, 0, mzStats.length / 4));
+        solrCluster.setConsensusSpectrumMzMean2(StatUtils.mean(mzStats, mzStats.length / 4, mzStats.length / 4));
+        solrCluster.setConsensusSpectrumMzMean3(StatUtils.mean(mzStats, mzStats.length / 2, mzStats.length / 4));
+        solrCluster.setConsensusSpectrumMzMean4(StatUtils.mean(mzStats, (3 * mzStats.length) / 4, mzStats.length / 4));
+        solrCluster.setConsensusSpectrumMzSem(StatUtils.variance(mzStats, StatUtils.mean(mzStats)) / mzStats.length);
 
         solrCluster.setConsensusSpectrumIntensityMean1(StatUtils.mean(intensityStats, 0, intensityStats.length/4));
-        solrCluster.setConsensusSpectrumIntensityMean2(StatUtils.mean(intensityStats, intensityStats.length/4, intensityStats.length/4));
-        solrCluster.setConsensusSpectrumIntensityMean3(StatUtils.mean(intensityStats, intensityStats.length/2, intensityStats.length/4));
-        solrCluster.setConsensusSpectrumIntensityMean4(StatUtils.mean(intensityStats, (3*intensityStats.length)/4, intensityStats.length/4));
+        solrCluster.setConsensusSpectrumIntensityMean2(StatUtils.mean(intensityStats, intensityStats.length / 4, intensityStats.length / 4));
+        solrCluster.setConsensusSpectrumIntensityMean3(StatUtils.mean(intensityStats, intensityStats.length / 2, intensityStats.length / 4));
+        solrCluster.setConsensusSpectrumIntensityMean4(StatUtils.mean(intensityStats, (3 * intensityStats.length) / 4, intensityStats.length / 4));
         solrCluster.setConsensusSpectrumIntensitySem(StatUtils.variance(intensityStats, StatUtils.mean(intensityStats)) / intensityStats.length);
 
     }
