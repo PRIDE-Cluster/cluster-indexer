@@ -38,6 +38,11 @@
         <constructor-arg ref="solrClusterTemplate"/>
     </bean>
 
+    <!--repositories that require manual creation-->
+    <bean id="solrClusterSpectralSearchRepository" class="uk.ac.ebi.pride.cluster.search.service.repository.SolrClusterSpectralSearchRepository">
+        <constructor-arg ref="solrClusterServer"/>
+    </bean>
+
     <!-- Search Services -->
     <bean id="ontologyTermSearchService" class="uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService">
         <constructor-arg value="#{ solrOntologyTermRepositoryFactory.create() }"/>
@@ -45,6 +50,7 @@
 
     <bean id="clusterSearchService" class="uk.ac.ebi.pride.cluster.search.service.ClusterSearchService">
         <constructor-arg value="#{ solrClusterRepositoryFactory.create() }"/>
+        <constructor-arg ref="solrClusterSpectralSearchRepository"/>
     </bean>
 
     <bean id="clusterIndexService" class="uk.ac.ebi.pride.cluster.search.service.ClusterIndexService">

@@ -37,39 +37,41 @@ public class ClusterIndexBuilder {
         ApplicationContext context = new ClassPathXmlApplicationContext("spring/app-context.xml");
 
         ClusterIndexBuilder clusterIndexBuilder = context.getBean(ClusterIndexBuilder.class);
-        indexClusters(clusterIndexBuilder);
 
-        if (args.length>0 && "inc".equals(args[0].toLowerCase())) {
-            indexNonExistingClusters(clusterIndexBuilder);
-        } else if (args.length>0 && "all".equals(args[0].toLowerCase())) {
-            indexClusters(clusterIndexBuilder);
+        if (args.length==2 && "inc".equals(args[0].toLowerCase())) {
+            indexNonExistingClusters(clusterIndexBuilder, Integer.parseInt(args[1]));
+        } else if (args.length==2 && "all".equals(args[0].toLowerCase())) {
+            indexClusters(clusterIndexBuilder, Integer.parseInt(args[1]));
         } else {
             System.out.println("Arguments:");
-            System.out.println("   inc   - index cluster not already in the index");
-            System.out.println("   all   - deletes the index and index all clusters");
+            System.out.println("   [inc/all]   - incremental OR complete");
+            System.out.println("   LOW_RES_SIZE   - a number indicating how many peaks to store for low res cluster version");
         }
 
     }
 
-    private static void indexNonExistingClusters(ClusterIndexBuilder clusterIndexBuilder) {
+    private static void indexNonExistingClusters(ClusterIndexBuilder clusterIndexBuilder, int lowResSize) {
 
         ClusterIndexerDB clusterIndexerDB = new ClusterIndexerDB(
                 clusterIndexBuilder.clusterSearchService,
                 clusterIndexBuilder.clusterIndexService,
                 clusterIndexBuilder.clusterReadDao,
-                clusterIndexBuilder.ontologyTermSearchService
+                clusterIndexBuilder.ontologyTermSearchService,
+                lowResSize
+
         );
 
         clusterIndexerDB.indexNonExistingClusters();
     }
 
-    public static void indexClusters(ClusterIndexBuilder clusterIndexBuilder) {
+    public static void indexClusters(ClusterIndexBuilder clusterIndexBuilder, int lowResSize) {
 
         ClusterIndexerDB clusterIndexerDB = new ClusterIndexerDB(
                 clusterIndexBuilder.clusterSearchService,
                 clusterIndexBuilder.clusterIndexService,
                 clusterIndexBuilder.clusterReadDao,
-                clusterIndexBuilder.ontologyTermSearchService
+                clusterIndexBuilder.ontologyTermSearchService,
+                lowResSize
         );
 
         clusterIndexerDB.indexAllClusters();

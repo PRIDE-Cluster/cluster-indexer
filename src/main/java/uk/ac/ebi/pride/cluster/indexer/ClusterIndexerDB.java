@@ -32,15 +32,18 @@ public class ClusterIndexerDB implements IClusterIndexer {
     private IClusterIndexService clusterIndexService;
     private IClusterReadDao clusterReadDao;
     private OntologyTermSearchService ontologyTermSearchService;
+    private int lowResSize = 10;
 
     public ClusterIndexerDB(IClusterSearchService clusterSearchService,
                             IClusterIndexService clusterIndexService,
                             IClusterReadDao clusterReadDao,
-                            OntologyTermSearchService ontologyTermSearchService) {
+                            OntologyTermSearchService ontologyTermSearchService,
+                            int lowResSize) {
         this.clusterSearchService = clusterSearchService;
         this.clusterIndexService = clusterIndexService;
         this.clusterReadDao = clusterReadDao;
         this.ontologyTermSearchService = ontologyTermSearchService;
+        this.lowResSize = lowResSize;
     }
 
     public void indexCluster(long clusterId) {
@@ -148,8 +151,8 @@ public class ClusterIndexerDB implements IClusterIndexer {
         Set<String> speciesNames = new LinkedHashSet<String>();
         Set<String> speciesAccessions = new LinkedHashSet<String>();
 
-        Set<String> pepSequences = new LinkedHashSet<String>();
-        Set<String> proteinAccs = new LinkedHashSet<String>();
+        Set<String> pepSequences = new HashSet<String>();
+        Set<String> proteinAccs = new HashSet<String>();
 
         Set<String> speciesDescendantsNames = new LinkedHashSet<String>();
         Set<String> speciesDescendantsAccessions = new LinkedHashSet<String>();
@@ -201,8 +204,12 @@ public class ClusterIndexerDB implements IClusterIndexer {
             }
         }
 
-        solrCluster.setHighestRatioProteinAccessions(proteinAccs);
-        solrCluster.setHighestRatioPepSequences(pepSequences);
+        List<String> highestRationProteinAccessions = new LinkedList<String>();
+        highestRationProteinAccessions.addAll(proteinAccs);
+        solrCluster.setHighestRatioProteinAccessions(highestRationProteinAccessions);
+        List<String> highestRationPeptideSequences = new LinkedList<String>();
+        highestRationPeptideSequences.addAll(pepSequences);
+        solrCluster.setHighestRatioPepSequences(highestRationPeptideSequences);
         solrCluster.setProjectAssays(projectAssays);
         solrCluster.setProjects(new ArrayList<String>(projects));
         solrCluster.setClusterQuality(QualityAssigner.calculateQuality(solrCluster.getNumberOfSpectra(), solrCluster.getMaxRatio()));
@@ -263,17 +270,23 @@ public class ClusterIndexerDB implements IClusterIndexer {
         }
 
         // set statistics
-        solrCluster.setConsensusSpectrumMzMean1(StatUtils.mean(mzStats, 0, mzStats.length / 4));
-        solrCluster.setConsensusSpectrumMzMean2(StatUtils.mean(mzStats, mzStats.length / 4, mzStats.length / 4));
-        solrCluster.setConsensusSpectrumMzMean3(StatUtils.mean(mzStats, mzStats.length / 2, mzStats.length / 4));
-        solrCluster.setConsensusSpectrumMzMean4(StatUtils.mean(mzStats, (3 * mzStats.length) / 4, mzStats.length / 4));
+        double[] mzValues = toLowRes(mzStats, this.lowResSize);
+        solrCluster.setConsensusSpectrumMzMeans(mzValues);
         solrCluster.setConsensusSpectrumMzSem(StatUtils.variance(mzStats, StatUtils.mean(mzStats)) / mzStats.length);
 
-        solrCluster.setConsensusSpectrumIntensityMean1(StatUtils.mean(intensityStats, 0, intensityStats.length/4));
-        solrCluster.setConsensusSpectrumIntensityMean2(StatUtils.mean(intensityStats, intensityStats.length / 4, intensityStats.length / 4));
-        solrCluster.setConsensusSpectrumIntensityMean3(StatUtils.mean(intensityStats, intensityStats.length / 2, intensityStats.length / 4));
-        solrCluster.setConsensusSpectrumIntensityMean4(StatUtils.mean(intensityStats, (3 * intensityStats.length) / 4, intensityStats.length / 4));
+        double[] intensityValues = toLowRes(intensityStats, this.lowResSize);
+        solrCluster.setConsensusSpectrumIntensityMeans(intensityValues);
         solrCluster.setConsensusSpectrumIntensitySem(StatUtils.variance(intensityStats, StatUtils.mean(intensityStats)) / intensityStats.length);
 
+    }
+
+    private double[] toLowRes(double[] input, int n) {
+        assert(n<=input.length): "Input must be bigger or equal to output";
+
+        double[] res = new double[n];
+        for (int i=0; i<n; i++) {
+            res[i] = StatUtils.mean(input, i * (input.length/n), (input.length/n));
+        }
+        return res;
     }
 }
