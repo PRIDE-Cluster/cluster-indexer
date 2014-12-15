@@ -1,8 +1,6 @@
 package uk.ac.ebi.pride.cluster.indexer;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.math.stat.StatUtils;
-import org.apache.commons.math.stat.descriptive.DescriptiveStatistics;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.pride.archive.ontology.model.OntologyTerm;
@@ -270,22 +268,25 @@ public class ClusterIndexerDB implements IClusterIndexer {
         }
 
         // set statistics
-        double[] mzValues = toLowRes(mzStats, this.lowResSize);
+        double[] mzValues = toLowResByBucketMean(solrCluster.getHighestRatioPepSequences().get(0), "MZ", mzStats, this.lowResSize);
         solrCluster.setConsensusSpectrumMzMeans(mzValues);
         solrCluster.setConsensusSpectrumMzSem(StatUtils.variance(mzStats, StatUtils.mean(mzStats)) / mzStats.length);
 
-        double[] intensityValues = toLowRes(intensityStats, this.lowResSize);
+        double[] intensityValues = toLowResByBucketMean(solrCluster.getHighestRatioPepSequences().get(0), "INTENSITY", intensityStats, this.lowResSize);
         solrCluster.setConsensusSpectrumIntensityMeans(intensityValues);
         solrCluster.setConsensusSpectrumIntensitySem(StatUtils.variance(intensityStats, StatUtils.mean(intensityStats)) / intensityStats.length);
 
     }
 
-    private double[] toLowRes(double[] input, int n) {
+    private double[] toLowResByBucketMean(String id, String type, double[] input, int n) {
         assert(n<=input.length): "Input must be bigger or equal to output";
 
         double[] res = new double[n];
-        for (int i=0; i<n; i++) {
-            res[i] = StatUtils.mean(input, i * (input.length/n), (input.length/n));
+        int bucketSize = ((int) ((double)input.length/(double)n)) + 1; // double to int implies rounding down
+        int bucketIndex = 0;
+        for (int inputIndex=0; inputIndex<input.length; inputIndex=inputIndex+bucketSize) {
+            res[bucketIndex] = StatUtils.mean(input, inputIndex, Math.min(bucketSize, input.length-inputIndex));
+            bucketIndex++;
         }
         return res;
     }
