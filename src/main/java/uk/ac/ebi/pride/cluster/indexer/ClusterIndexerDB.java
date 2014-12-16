@@ -9,6 +9,7 @@ import uk.ac.ebi.pride.cluster.search.model.ClusterQuality;
 import uk.ac.ebi.pride.cluster.search.model.SolrCluster;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
+import uk.ac.ebi.pride.cluster.search.util.LowResUtils;
 import uk.ac.ebi.pride.cluster.search.util.QualityAssigner;
 import uk.ac.ebi.pride.spectracluster.repo.dao.IClusterReadDao;
 import uk.ac.ebi.pride.spectracluster.repo.model.*;
@@ -268,26 +269,15 @@ public class ClusterIndexerDB implements IClusterIndexer {
         }
 
         // set statistics
-        double[] mzValues = toLowResByBucketMean(solrCluster.getHighestRatioPepSequences().get(0), "MZ", mzStats, this.lowResSize);
+        double[] mzValues = LowResUtils.toLowResByBucketMean( mzStats, this.lowResSize);
         solrCluster.setConsensusSpectrumMzMeans(mzValues);
         solrCluster.setConsensusSpectrumMzSem(StatUtils.variance(mzStats, StatUtils.mean(mzStats)) / mzStats.length);
 
-        double[] intensityValues = toLowResByBucketMean(solrCluster.getHighestRatioPepSequences().get(0), "INTENSITY", intensityStats, this.lowResSize);
+        double[] intensityValues = LowResUtils.toLowResByBucketMean(intensityStats, this.lowResSize);
         solrCluster.setConsensusSpectrumIntensityMeans(intensityValues);
         solrCluster.setConsensusSpectrumIntensitySem(StatUtils.variance(intensityStats, StatUtils.mean(intensityStats)) / intensityStats.length);
 
     }
 
-    private double[] toLowResByBucketMean(String id, String type, double[] input, int n) {
-        assert(n<=input.length): "Input must be bigger or equal to output";
 
-        double[] res = new double[n];
-        int bucketSize = ((int) ((double)input.length/(double)n)) + 1; // double to int implies rounding down
-        int bucketIndex = 0;
-        for (int inputIndex=0; inputIndex<input.length; inputIndex=inputIndex+bucketSize) {
-            res[bucketIndex] = StatUtils.mean(input, inputIndex, Math.min(bucketSize, input.length-inputIndex));
-            bucketIndex++;
-        }
-        return res;
-    }
 }
