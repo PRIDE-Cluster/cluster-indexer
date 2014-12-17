@@ -31,7 +31,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
     private IClusterIndexService clusterIndexService;
     private IClusterReadDao clusterReadDao;
     private OntologyTermSearchService ontologyTermSearchService;
-    private int lowResSize = 10;
+    private int lowResSize = 20;
 
     public ClusterIndexerDB(IClusterSearchService clusterSearchService,
                             IClusterIndexService clusterIndexService,
