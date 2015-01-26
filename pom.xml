@@ -41,7 +41,7 @@
 
     <properties>
         <ontology.index.search.version>0.1.1</ontology.index.search.version>
-        <cluster.search.version>1.0-SNAPSHOT</cluster.search.version>
+        <cluster.search.version>0.1.0-SNAPSHOT</cluster.search.version>
     </properties>
 
     <build>
@@ -66,26 +66,7 @@
         </resources>
 
         <plugins>
-            <!--assembly to zip-->
-            <plugin>
-                <artifactId>maven-assembly-plugin</artifactId>
-                <configuration>
-                    <descriptors>
-                        <descriptor>${project.basedir}/assembly.xml</descriptor>
-                    </descriptors>
-                </configuration>
-                <executions>
-                    <execution>
-                        <id>assembly</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>single</goal>
-                        </goals>
-                    </execution>
-                </executions>
-            </plugin>
-            <!-- maven dependency plugin -->
-            <plugin>
+            <plugin> <!-- maven dependency plugin -->
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <executions>
@@ -104,6 +85,12 @@
                     </execution>
                 </executions>
             </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-source-plugin</artifactId>
+            </plugin>
+
             <!--jar-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -125,10 +112,36 @@
                     </archive>
                 </configuration>
             </plugin>
+
+            <!--assembly to zip-->
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <descriptors>
+                        <descriptor>${project.basedir}/assembly.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>assembly</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
         </plugins>
     </build>
 
     <dependencies>
+
+        <!--WS client-->
+        <dependency>
+            <groupId>uk.ac.ebi.pride.cluster</groupId>
+            <artifactId>cluster-ws-client</artifactId>
+            <version>0.1.0-SNAPSHOT</version>
+        </dependency>
 
         <!-- cluster-index-search -->
         <dependency>
@@ -162,7 +175,6 @@
         <dependency>
             <groupId>com.oracle</groupId>
             <artifactId>oracle-thin</artifactId>
-            <scope>provided</scope>
         </dependency>
 
         <!--logging-->
@@ -182,6 +194,14 @@
             <groupId>ch.qos.logback</groupId>
             <artifactId>logback-classic</artifactId>
         </dependency>
+
+        <!--Apache commons math-->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-math</artifactId>
+            <version>2.0</version>
+        </dependency>
+
     </dependencies>
 
     <repositories>
@@ -195,6 +215,16 @@
                 <enabled>false</enabled>
             </snapshots>
         </repository>
+
+        <repository>
+            <id>cluster-ws-client-java-mvn-repo</id>
+            <url>https://raw.github.com/PRIDE-Cluster/cluster-ws-client-java/mvn-repo/</url>
+            <snapshots>
+                <enabled>true</enabled>
+                <updatePolicy>always</updatePolicy>
+            </snapshots>
+        </repository>
+
     </repositories>
 
 </project>

@@ -2,15 +2,13 @@
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
        xmlns:context="http://www.springframework.org/schema/context"
-       xmlns:bean="http://www.springframework.org/schema/context"
        xsi:schemaLocation="http://www.springframework.org/schema/beans
                            http://www.springframework.org/schema/beans/spring-beans.xsd
                            http://www.springframework.org/schema/context
                            http://www.springframework.org/schema/context/spring-context-3.1.xsd">
 
-    <bean:component-scan base-package="uk.ac.ebi.pride.cluster.indexer"/>
-    <bean:component-scan base-package="uk.ac.ebi.pride.cluster.search"/>
-    <bean:component-scan base-package="uk.ac.ebi.pride.archive.ontology"/>
+    <context:component-scan base-package="uk.ac.ebi.pride.cluster.indexer.tools"/>
+
 
     <!--Solr Servers-->
     <bean id="solrClusterServer" class="org.apache.solr.client.solrj.impl.HttpSolrServer">
@@ -18,7 +16,7 @@
     </bean>
 
     <bean id="solrOntologyServer" class="org.apache.solr.client.solrj.impl.HttpSolrServer">
-        <constructor-arg name="baseURL" value="${solr.pride.ontology.core.url}" />
+        <constructor-arg name="baseURL" value="${solr.server.ontology.core.url}" />
     </bean>
 
 
@@ -40,6 +38,11 @@
         <constructor-arg ref="solrClusterTemplate"/>
     </bean>
 
+    <!--repositories that require manual creation-->
+    <bean id="solrClusterSpectralSearchRepository" class="uk.ac.ebi.pride.cluster.search.service.repository.SolrClusterSpectralSearchRepository">
+        <constructor-arg ref="solrClusterServer"/>
+    </bean>
+
     <!-- Search Services -->
     <bean id="ontologyTermSearchService" class="uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService">
         <constructor-arg value="#{ solrOntologyTermRepositoryFactory.create() }"/>
@@ -47,6 +50,7 @@
 
     <bean id="clusterSearchService" class="uk.ac.ebi.pride.cluster.search.service.ClusterSearchService">
         <constructor-arg value="#{ solrClusterRepositoryFactory.create() }"/>
+        <constructor-arg ref="solrClusterSpectralSearchRepository"/>
     </bean>
 
     <bean id="clusterIndexService" class="uk.ac.ebi.pride.cluster.search.service.ClusterIndexService">

@@ -5,13 +5,14 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
 import uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService;
-import uk.ac.ebi.pride.cluster.indexer.ClusterIndexer;
+import uk.ac.ebi.pride.cluster.indexer.ClusterIndexerDB;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
 import uk.ac.ebi.pride.spectracluster.repo.dao.IClusterReadDao;
 
 /**
  * @author ntoro
+ * @author Jose A. Dianes <jadianes@gmail.com>
  * @since 14/11/14 14:29
  */
 
@@ -36,41 +37,43 @@ public class ClusterIndexBuilder {
         ApplicationContext context = new ClassPathXmlApplicationContext("spring/app-context.xml");
 
         ClusterIndexBuilder clusterIndexBuilder = context.getBean(ClusterIndexBuilder.class);
-        indexClusters(clusterIndexBuilder);
 
-        if (args.length>0 && "inc".equals(args[0].toLowerCase())) {
-            indexNonExistingClusters(clusterIndexBuilder);
-        } else if (args.length>0 && "all".equals(args[0].toLowerCase())) {
-            indexClusters(clusterIndexBuilder);
+        if (args.length==2 && "inc".equals(args[0].toLowerCase())) {
+            indexNonExistingClusters(clusterIndexBuilder, Integer.parseInt(args[1]));
+        } else if (args.length==2 && "all".equals(args[0].toLowerCase())) {
+            indexClusters(clusterIndexBuilder, Integer.parseInt(args[1]));
         } else {
             System.out.println("Arguments:");
-            System.out.println("   inc   - index cluster not already in the index");
-            System.out.println("   all   - deletes the index and index all clusters");
+            System.out.println("   [inc/all]   - incremental OR complete");
+            System.out.println("   LOW_RES_SIZE   - a number indicating how many peaks to store for low res cluster version");
         }
 
     }
 
-    private static void indexNonExistingClusters(ClusterIndexBuilder clusterIndexBuilder) {
+    private static void indexNonExistingClusters(ClusterIndexBuilder clusterIndexBuilder, int lowResSize) {
 
-        ClusterIndexer clusterIndexer = new ClusterIndexer(
+        ClusterIndexerDB clusterIndexerDB = new ClusterIndexerDB(
                 clusterIndexBuilder.clusterSearchService,
                 clusterIndexBuilder.clusterIndexService,
                 clusterIndexBuilder.clusterReadDao,
-                clusterIndexBuilder.ontologyTermSearchService
+                clusterIndexBuilder.ontologyTermSearchService,
+                lowResSize
+
         );
 
-        clusterIndexer.indexNonExistingClusters();
+        clusterIndexerDB.indexNonExistingClusters();
     }
 
-    public static void indexClusters(ClusterIndexBuilder clusterIndexBuilder) {
+    public static void indexClusters(ClusterIndexBuilder clusterIndexBuilder, int lowResSize) {
 
-        ClusterIndexer clusterIndexer = new ClusterIndexer(
+        ClusterIndexerDB clusterIndexerDB = new ClusterIndexerDB(
                 clusterIndexBuilder.clusterSearchService,
                 clusterIndexBuilder.clusterIndexService,
                 clusterIndexBuilder.clusterReadDao,
-                clusterIndexBuilder.ontologyTermSearchService
+                clusterIndexBuilder.ontologyTermSearchService,
+                lowResSize
         );
 
-        clusterIndexer.indexAllClusters();
+        clusterIndexerDB.indexAllClusters();
     }
 }
