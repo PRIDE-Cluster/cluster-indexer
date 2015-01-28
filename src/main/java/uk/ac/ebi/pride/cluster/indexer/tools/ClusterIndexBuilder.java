@@ -6,8 +6,12 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.stereotype.Component;
 import uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService;
 import uk.ac.ebi.pride.cluster.indexer.ClusterIndexerDB;
+import uk.ac.ebi.pride.cluster.indexer.ClusterIndexerWs;
+import uk.ac.ebi.pride.cluster.indexer.IClusterIndexer;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
+import uk.ac.ebi.pride.cluster.wsclient.client.cluster.ClusterWsClient;
+import uk.ac.ebi.pride.cluster.wsclient.config.ClusterWsConfigDev;
 import uk.ac.ebi.pride.spectracluster.repo.dao.IClusterReadDao;
 
 /**
@@ -33,47 +37,50 @@ public class ClusterIndexBuilder {
     @Autowired
     private IClusterReadDao clusterReadDao;
 
+    @Autowired
+    private ClusterWsConfigDev clusterWsConfigDev;
+
+    private static IClusterIndexer clusterIndexer;
+
     public static void main(String[] args) {
         ApplicationContext context = new ClassPathXmlApplicationContext("spring/app-context.xml");
 
         ClusterIndexBuilder clusterIndexBuilder = context.getBean(ClusterIndexBuilder.class);
 
-        if (args.length==2 && "inc".equals(args[0].toLowerCase())) {
-            indexNonExistingClusters(clusterIndexBuilder, Integer.parseInt(args[1]));
-        } else if (args.length==2 && "all".equals(args[0].toLowerCase())) {
-            indexClusters(clusterIndexBuilder, Integer.parseInt(args[1]));
+        if (args.length==3 && "db".equals(args[0].toLowerCase())) {
+            clusterIndexer = new ClusterIndexerDB(
+                    clusterIndexBuilder.clusterSearchService,
+                    clusterIndexBuilder.clusterIndexService,
+                    clusterIndexBuilder.clusterReadDao,
+                    clusterIndexBuilder.ontologyTermSearchService,
+                    Integer.parseInt(args[2])
+            );
+        } else if (args.length==3 && "ws".equals(args[0].toLowerCase())) {
+            clusterIndexer = new ClusterIndexerWs(
+                    clusterIndexBuilder.clusterSearchService,
+                    clusterIndexBuilder.clusterIndexService,
+                    new ClusterWsClient(clusterIndexBuilder.clusterWsConfigDev),
+                    Integer.parseInt(args[2])
+            );
         } else {
             System.out.println("Arguments:");
+            System.out.println("   [db/ws]   - database OR web service data source");
+            System.out.println("   [inc/all]   - incremental OR complete");
+            System.out.println("   LOW_RES_SIZE   - a number indicating how many peaks to store for low res cluster version");
+            return;
+        }
+
+        if (args.length==3 && "inc".equals(args[1].toLowerCase())) {
+            clusterIndexer.indexNonExistingClusters();
+        } else if (args.length==3 && "all".equals(args[1].toLowerCase())) {
+            clusterIndexer.indexAllClusters();
+        } else {
+            System.out.println("Arguments:");
+            System.out.println("   [db/ws]   - database OR web service data source");
             System.out.println("   [inc/all]   - incremental OR complete");
             System.out.println("   LOW_RES_SIZE   - a number indicating how many peaks to store for low res cluster version");
         }
 
     }
 
-    private static void indexNonExistingClusters(ClusterIndexBuilder clusterIndexBuilder, int lowResSize) {
-
-        ClusterIndexerDB clusterIndexerDB = new ClusterIndexerDB(
-                clusterIndexBuilder.clusterSearchService,
-                clusterIndexBuilder.clusterIndexService,
-                clusterIndexBuilder.clusterReadDao,
-                clusterIndexBuilder.ontologyTermSearchService,
-                lowResSize
-
-        );
-
-        clusterIndexerDB.indexNonExistingClusters();
-    }
-
-    public static void indexClusters(ClusterIndexBuilder clusterIndexBuilder, int lowResSize) {
-
-        ClusterIndexerDB clusterIndexerDB = new ClusterIndexerDB(
-                clusterIndexBuilder.clusterSearchService,
-                clusterIndexBuilder.clusterIndexService,
-                clusterIndexBuilder.clusterReadDao,
-                clusterIndexBuilder.ontologyTermSearchService,
-                lowResSize
-        );
-
-        clusterIndexerDB.indexAllClusters();
-    }
 }

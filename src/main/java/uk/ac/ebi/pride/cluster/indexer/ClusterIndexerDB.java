@@ -244,7 +244,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
     }
 
-    public void setConsensusSpectrum(SolrCluster solrCluster, ClusterSummary repoCluster) {
+    private void setConsensusSpectrum(SolrCluster solrCluster, ClusterSummary repoCluster) {
 
         // get the peaks as a string and split them
         String[] peaksMz = repoCluster.getConsensusSpectrumMz().split(",");
