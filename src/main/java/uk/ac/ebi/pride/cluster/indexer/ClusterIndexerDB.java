@@ -167,7 +167,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setAveragePrecursorMz(clusterDetail.getAveragePrecursorMz());
         solrCluster.setMaxRatio(clusterDetail.getMaxPeptideRatio());
 
-        List<ClusteredPSMDetail> clusteredPSMSummaries = clusterDetail.getClusteredPSMSummaries();
+        List<ClusteredPSMDetail> clusteredPSMSummaries = clusterDetail.getClusteredPSMDetails();
 
         //Highest rank peptides and protein accessions
         for (ClusteredPSMDetail clusteredPSMDetail : clusteredPSMSummaries) {
