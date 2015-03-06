@@ -12,7 +12,7 @@ import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
 import uk.ac.ebi.pride.cluster.wsclient.client.cluster.ClusterWsClient;
 import uk.ac.ebi.pride.cluster.wsclient.config.ClusterWsConfigDev;
-import uk.ac.ebi.pride.spectracluster.repo.dao.IClusterReadDao;
+import uk.ac.ebi.pride.spectracluster.repo.dao.cluster.IClusterReadDao;
 
 /**
  * @author ntoro
