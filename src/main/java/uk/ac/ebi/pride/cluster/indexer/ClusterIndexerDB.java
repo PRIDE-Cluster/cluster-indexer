@@ -5,12 +5,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import uk.ac.ebi.pride.archive.ontology.model.OntologyTerm;
 import uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService;
-import uk.ac.ebi.pride.cluster.search.model.ClusterQuality;
 import uk.ac.ebi.pride.cluster.search.model.SolrCluster;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
 import uk.ac.ebi.pride.cluster.search.util.LowResUtils;
-import uk.ac.ebi.pride.cluster.search.util.QualityAssigner;
 import uk.ac.ebi.pride.spectracluster.repo.dao.cluster.IClusterReadDao;
 import uk.ac.ebi.pride.spectracluster.repo.model.*;
 import uk.ac.ebi.pride.spectracluster.repo.utils.paging.Page;
@@ -24,6 +22,8 @@ import java.util.*;
 public class ClusterIndexerDB implements IClusterIndexer {
 
     private static final int PAGE_SIZE = 500;
+
+    private static final ClusterQuality DEFAULT_CLUSTER_QUALITY = ClusterQuality.HIGH;
 
     private static Logger logger = LoggerFactory.getLogger(ClusterIndexerDB.class);
 
@@ -78,7 +78,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
         Page<Long> clusterIds;
         while (count < numClusters) {
-            clusterIds = clusterReadDao.getAllClusterIds(page++, PAGE_SIZE);
+            clusterIds = clusterReadDao.getAllClusterIdsByQuality(page++, PAGE_SIZE, DEFAULT_CLUSTER_QUALITY);
             clusters = asSolrCluster(clusterIds.getPageItems());
             clusterIndexService.save(clusters);
             logger.debug("COMMITTED " + clusters.size() + " clusters.");
@@ -87,7 +87,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         }
 
         endTime = System.currentTimeMillis();
-        logger.info("DONE indexing all CLUSTERs in " + (double) (endTime - startTime) / 1000.0 + " seconds");
+        logger.info("DONE indexing all clusters in " + (double) (endTime - startTime) / 1000.0 + " seconds");
 
     }
 
@@ -101,12 +101,12 @@ public class ClusterIndexerDB implements IClusterIndexer {
         long startTime;
         long endTime;
 
-        // add all CLUSTERs to index
+        // add all clusters to index
         startTime = System.currentTimeMillis();
 
         Page<Long> clusterIds;
         while (count < numClusters) {
-            clusterIds = clusterReadDao.getAllClusterIds(page++, PAGE_SIZE);
+            clusterIds = clusterReadDao.getAllClusterIdsByQuality(page++, PAGE_SIZE, DEFAULT_CLUSTER_QUALITY);
 
             for (Long clusterId : clusterIds.getPageItems()) {
                 if (!clusterSearchService.existsCluster(clusterId)) {
@@ -122,7 +122,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         }
 
         endTime = System.currentTimeMillis();
-        logger.info("DONE indexing all CLUSTERs in " + (double) (endTime - startTime) / 1000.0 + " seconds");
+        logger.info("DONE indexing all clusters in " + (double) (endTime - startTime) / 1000.0 + " seconds");
 
     }
 
@@ -211,7 +211,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setHighestRatioPepSequences(highestRationPeptideSequences);
         solrCluster.setProjectAssays(projectAssays);
         solrCluster.setProjects(new ArrayList<String>(projects));
-        solrCluster.setClusterQuality(QualityAssigner.calculateQuality(solrCluster.getNumberOfSpectra(), solrCluster.getMaxRatio()));
+        solrCluster.setClusterQuality(clusterDetail.getQuality().toString());
 
         // Expand species
         solrCluster.setSpeciesNames(new ArrayList<String>(speciesNames));
@@ -236,9 +236,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setSpeciesAscendantsNames(new ArrayList<String>(speciesDescendantsNames));
 
         // consensus spectrum
-        if (solrCluster.getClusterQuality() == ClusterQuality.HIGH) {
-            setConsensusSpectrum(solrCluster, clusterDetail);
-        }
+        setConsensusSpectrum(solrCluster, clusterDetail);
 
         return solrCluster;
 
