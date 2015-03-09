@@ -11,7 +11,7 @@ import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
 import uk.ac.ebi.pride.cluster.search.util.LowResUtils;
 import uk.ac.ebi.pride.cluster.search.util.QualityAssigner;
-import uk.ac.ebi.pride.spectracluster.repo.dao.IClusterReadDao;
+import uk.ac.ebi.pride.spectracluster.repo.dao.cluster.IClusterReadDao;
 import uk.ac.ebi.pride.spectracluster.repo.model.*;
 import uk.ac.ebi.pride.spectracluster.repo.utils.paging.Page;
 
@@ -167,7 +167,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setAveragePrecursorMz(clusterDetail.getAveragePrecursorMz());
         solrCluster.setMaxRatio(clusterDetail.getMaxPeptideRatio());
 
-        List<ClusteredPSMDetail> clusteredPSMSummaries = clusterDetail.getClusteredPSMSummaries();
+        List<ClusteredPSMDetail> clusteredPSMSummaries = clusterDetail.getClusteredPSMDetails();
 
         //Highest rank peptides and protein accessions
         for (ClusteredPSMDetail clusteredPSMDetail : clusteredPSMSummaries) {
@@ -244,7 +244,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
     }
 
-    public void setConsensusSpectrum(SolrCluster solrCluster, ClusterSummary repoCluster) {
+    private void setConsensusSpectrum(SolrCluster solrCluster, ClusterSummary repoCluster) {
 
         // get the peaks as a string and split them
         String[] peaksMz = repoCluster.getConsensusSpectrumMz().split(",");
