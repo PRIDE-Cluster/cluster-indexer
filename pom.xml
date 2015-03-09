@@ -13,7 +13,7 @@
 
     <groupId>uk.ac.ebi.pride.cluster</groupId>
     <artifactId>cluster-indexer</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.1.1-SNAPSHOT</version>
     <name>cluster-indexer</name>
 
 
@@ -41,7 +41,7 @@
 
     <properties>
         <ontology.index.search.version>0.1.1</ontology.index.search.version>
-        <cluster.search.version>0.1.0-SNAPSHOT</cluster.search.version>
+        <cluster.search.version>0.1.1-SNAPSHOT</cluster.search.version>
         <cluster-ws-client.version>0.1.0-SNAPSHOT</cluster-ws-client.version>
         <spectra-cluster-repo.version>1.0.2-SNAPSHOT</spectra-cluster-repo.version>
     </properties>
