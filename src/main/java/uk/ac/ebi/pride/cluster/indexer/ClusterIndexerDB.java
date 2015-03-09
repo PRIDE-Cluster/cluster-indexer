@@ -150,11 +150,17 @@ public class ClusterIndexerDB implements IClusterIndexer {
         Set<String> speciesNames = new LinkedHashSet<String>();
         Set<String> speciesAccessions = new LinkedHashSet<String>();
 
+        Set<String> modificationNames = new LinkedHashSet<String>();
+        Set<String> modificationAccessions = new LinkedHashSet<String>();
+
         Set<String> pepSequences = new HashSet<String>();
         Set<String> proteinAccs = new HashSet<String>();
 
         Set<String> speciesDescendantsNames = new LinkedHashSet<String>();
         Set<String> speciesDescendantsAccessions = new LinkedHashSet<String>();
+
+        Set<String> modificationDescendantsNames = new LinkedHashSet<String>();
+        Set<String> modificationDescendantsAccessions = new LinkedHashSet<String>();
 
         Map<String, List<String>> projectAssays = new HashMap<String, List<String>>();
 
@@ -163,6 +169,13 @@ public class ClusterIndexerDB implements IClusterIndexer {
         SolrCluster solrCluster = new SolrCluster();
         solrCluster.setId(clusterDetail.getId());
         solrCluster.setNumberOfSpectra(clusterDetail.getNumberOfSpectra());
+        solrCluster.setTotalNumberOfSpectra(clusterDetail.getTotalNumberOfSpectra());
+        solrCluster.setNumberOfProjects(clusterDetail.getNumberOfProjects());
+        solrCluster.setTotalNumberOfProjects(clusterDetail.getTotalNumberOfProjects());
+        solrCluster.setNumberOfSpecies(clusterDetail.getNumberOfSpecies());
+        solrCluster.setTotalNumberOfSpecies(clusterDetail.getTotalNumberOfSpecies());
+        solrCluster.setNumberOfModifications(clusterDetail.getNumberOfModifications());
+        solrCluster.setTotalNumberOfModifications(clusterDetail.getTotalNumberOfModifications());
         solrCluster.setAveragePrecursorCharge(clusterDetail.getAveragePrecursorCharge());
         solrCluster.setAveragePrecursorMz(clusterDetail.getAveragePrecursorMz());
         solrCluster.setMaxRatio(clusterDetail.getMaxPeptideRatio());
@@ -171,15 +184,18 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
         //Highest rank peptides and protein accessions
         for (ClusteredPSMDetail clusteredPSMDetail : clusteredPSMSummaries) {
-            if (clusteredPSMDetail.getRank() == 1) {
+            if (clusteredPSMDetail.getRank() == 1.1) {
                 PSMDetail psmDetail = clusteredPSMDetail.getPsmDetail();
-                if (psmDetail != null) {
-                    pepSequences.add(psmDetail.getSequence());
-                    proteinAccs.add(psmDetail.getProteinAccession());
-                    // TODO protein group
-                    // proteinAccs.addAll(psmDetail.getProteinGroup());
-                    assaysIds.add(psmDetail.getAssayId());
+                pepSequences.add(psmDetail.getSequence());
+                List<ModificationDetail> modifications = psmDetail.getModifications();
+                for (ModificationDetail modification : modifications) {
+                    modificationNames.add(modification.getName());
+                    modificationAccessions.add(modification.getAccession());
                 }
+                proteinAccs.add(psmDetail.getProteinAccession());
+                // TODO protein group
+                // proteinAccs.addAll(psmDetail.getProteinGroup());
+                assaysIds.add(psmDetail.getAssayId());
             }
         }
 
@@ -235,6 +251,27 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setSpeciesAscendantsAccessions(new ArrayList<String>(speciesDescendantsAccessions));
         solrCluster.setSpeciesAscendantsNames(new ArrayList<String>(speciesDescendantsNames));
 
+        // modifications
+        solrCluster.setModificationNames(new ArrayList<String>(modificationNames));
+        solrCluster.setModificationAccessions(new ArrayList<String>(modificationAccessions));
+
+        for (int i = 0; i < modificationAccessions.size(); i++) {
+            String modificationAccession = solrCluster.getModificationAccessions().get(i);
+            String modificationName = solrCluster.getModificationNames().get(i);
+            List<OntologyTerm> relativeModifications = ontologyTermSearchService.findAllByDescendant(modificationAccession);
+            for (OntologyTerm relativeOntologyTerm : relativeModifications) {
+
+                modificationDescendantsAccessions.add(relativeOntologyTerm.getAccession());
+                modificationDescendantsNames.add(relativeOntologyTerm.getName());
+            }
+
+            modificationDescendantsAccessions.add(modificationAccession);
+            modificationDescendantsNames.add(modificationName);
+        }
+
+        solrCluster.setModificationAscendantsNames(new ArrayList<String>(modificationDescendantsNames));
+        solrCluster.setModificationAscendantsAccessions(new ArrayList<String>(modificationDescendantsAccessions));
+
         // consensus spectrum
         setConsensusSpectrum(solrCluster, clusterDetail);
 
@@ -267,7 +304,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         }
 
         // set statistics
-        double[] mzValues = LowResUtils.toLowResByBucketMean( mzStats, this.lowResSize);
+        double[] mzValues = LowResUtils.toLowResByBucketMean(mzStats, this.lowResSize);
         solrCluster.setConsensusSpectrumMzMeans(mzValues);
         solrCluster.setConsensusSpectrumMzSem(StatUtils.variance(mzStats, StatUtils.mean(mzStats)) / mzStats.length);
 

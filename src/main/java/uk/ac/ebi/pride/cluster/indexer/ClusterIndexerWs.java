@@ -3,7 +3,6 @@ package uk.ac.ebi.pride.cluster.indexer;
 import org.apache.commons.math.stat.StatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import uk.ac.ebi.pride.cluster.search.model.ClusterQuality;
 import uk.ac.ebi.pride.cluster.search.model.SolrCluster;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
@@ -121,7 +120,7 @@ public class ClusterIndexerWs implements IClusterIndexer {
         solrCluster.setHighestRatioProteinAccessions(highestRatioProteinAccessions);
         solrCluster.setAveragePrecursorCharge(cluster.averagePrecursorCharge);
         solrCluster.setAveragePrecursorMz(cluster.averagePrecursorMz);
-        solrCluster.setClusterQuality(ClusterQuality.valueOf(cluster.clusterQuality));
+        solrCluster.setClusterQuality(cluster.clusterQuality);
         solrCluster.setMaxRatio(cluster.maxRatio);
         solrCluster.setNumberOfSpectra(cluster.numberOfSpectra);
         Map<String, List<String>> projectAssays = new HashMap<String, List<String>>();
@@ -134,9 +133,7 @@ public class ClusterIndexerWs implements IClusterIndexer {
         Spectrum consensusSpectrum = this.clusterWsClient.consensus(cluster.id);
 
         // consensus spectrum
-        if (solrCluster.getClusterQuality() == ClusterQuality.HIGH) {
-            setConsensusSpectrum(solrCluster, consensusSpectrum);
-        }
+        setConsensusSpectrum(solrCluster, consensusSpectrum);
 
         return solrCluster;
     }
