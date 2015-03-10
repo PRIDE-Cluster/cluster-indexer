@@ -255,23 +255,6 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setModificationNames(new ArrayList<String>(modificationNames));
         solrCluster.setModificationAccessions(new ArrayList<String>(modificationAccessions));
 
-        for (int i = 0; i < modificationAccessions.size(); i++) {
-            String modificationAccession = solrCluster.getModificationAccessions().get(i);
-            String modificationName = solrCluster.getModificationNames().get(i);
-            List<OntologyTerm> relativeModifications = ontologyTermSearchService.findAllByDescendant(modificationAccession);
-            for (OntologyTerm relativeOntologyTerm : relativeModifications) {
-
-                modificationDescendantsAccessions.add(relativeOntologyTerm.getAccession());
-                modificationDescendantsNames.add(relativeOntologyTerm.getName());
-            }
-
-            modificationDescendantsAccessions.add(modificationAccession);
-            modificationDescendantsNames.add(modificationName);
-        }
-
-        solrCluster.setModificationAscendantsNames(new ArrayList<String>(modificationDescendantsNames));
-        solrCluster.setModificationAscendantsAccessions(new ArrayList<String>(modificationDescendantsAccessions));
-
         // consensus spectrum
         setConsensusSpectrum(solrCluster, clusterDetail);
 
