@@ -184,7 +184,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
         //Highest rank peptides and protein accessions
         for (ClusteredPSMDetail clusteredPSMDetail : clusteredPSMSummaries) {
-            if (clusteredPSMDetail.getRank() == 1.1) {
+            if (clusteredPSMDetail.getRank() == 1.1f) {
                 PSMDetail psmDetail = clusteredPSMDetail.getPsmDetail();
                 pepSequences.add(psmDetail.getSequence());
                 List<ModificationDetail> modifications = psmDetail.getModifications();
@@ -199,7 +199,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
             }
         }
 
-        assayDetails = clusterReadDao.findAssays(new ArrayList<Long>(assaysIds));
+        assayDetails = clusterDetail.getAssayDetails();
 
         //Processing assay information
         for (AssayDetail repoAssay : assayDetails) {
