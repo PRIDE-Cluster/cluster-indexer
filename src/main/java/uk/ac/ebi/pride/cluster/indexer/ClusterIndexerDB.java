@@ -159,9 +159,6 @@ public class ClusterIndexerDB implements IClusterIndexer {
         Set<String> speciesDescendantsNames = new LinkedHashSet<String>();
         Set<String> speciesDescendantsAccessions = new LinkedHashSet<String>();
 
-        Set<String> modificationDescendantsNames = new LinkedHashSet<String>();
-        Set<String> modificationDescendantsAccessions = new LinkedHashSet<String>();
-
         Map<String, List<String>> projectAssays = new HashMap<String, List<String>>();
 
         clusterDetail = clusterReadDao.findCluster(clusterId);
