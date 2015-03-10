@@ -144,7 +144,6 @@ public class ClusterIndexerDB implements IClusterIndexer {
         ClusterDetail clusterDetail;
         List<AssayDetail> assayDetails;
 
-        Set<Long> assaysIds = new LinkedHashSet<Long>();
         Set<String> projects = new LinkedHashSet<String>();
 
         Set<String> speciesNames = new LinkedHashSet<String>();
@@ -192,7 +191,6 @@ public class ClusterIndexerDB implements IClusterIndexer {
                 proteinAccs.add(psmDetail.getProteinAccession());
                 // TODO protein group
                 // proteinAccs.addAll(psmDetail.getProteinGroup());
-                assaysIds.add(psmDetail.getAssayId());
             }
         }
 
