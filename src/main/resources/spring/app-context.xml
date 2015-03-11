@@ -60,7 +60,7 @@
     </bean>
 
 
-    <bean class="uk.ac.ebi.pride.spectracluster.repo.dao.ClusterReader" id="clusterReaderDao">
+    <bean class="uk.ac.ebi.pride.spectracluster.repo.dao.cluster.ClusterReader" id="clusterReaderDao">
         <constructor-arg ref="clusterDataSource"/>
     </bean>
 
