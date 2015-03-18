@@ -3,6 +3,7 @@ package uk.ac.ebi.pride.cluster.indexer;
 import org.apache.commons.math.stat.StatUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import uk.ac.ebi.pride.archive.dataprovider.identification.ModificationProvider;
 import uk.ac.ebi.pride.archive.ontology.model.OntologyTerm;
 import uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService;
 import uk.ac.ebi.pride.cluster.search.model.SolrCluster;
@@ -149,9 +150,6 @@ public class ClusterIndexerDB implements IClusterIndexer {
         Set<String> speciesNames = new LinkedHashSet<String>();
         Set<String> speciesAccessions = new LinkedHashSet<String>();
 
-        Set<String> modificationNames = new LinkedHashSet<String>();
-        Set<String> modificationAccessions = new LinkedHashSet<String>();
-
         Set<String> pepSequences = new HashSet<String>();
         Set<String> proteinAccs = new HashSet<String>();
 
@@ -183,11 +181,12 @@ public class ClusterIndexerDB implements IClusterIndexer {
             if (clusteredPSMDetail.getRank() == 1.1f) {
                 PSMDetail psmDetail = clusteredPSMDetail.getPsmDetail();
                 pepSequences.add(psmDetail.getSequence());
-                List<ModificationDetail> modifications = psmDetail.getModifications();
-                for (ModificationDetail modification : modifications) {
-                    modificationNames.add(modification.getName());
-                    modificationAccessions.add(modification.getAccession());
+                // modifications
+                Set<ModificationProvider> modifications = new HashSet<ModificationProvider>();
+                for (ModificationProvider modification : psmDetail.getModifications()) {
+                    modifications.add(modification);
                 }
+                solrCluster.setModifications(new ArrayList<ModificationProvider>(modifications));
                 proteinAccs.add(psmDetail.getProteinAccession());
                 // TODO protein group
                 // proteinAccs.addAll(psmDetail.getProteinGroup());
@@ -246,9 +245,6 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setSpeciesAscendantsAccessions(new ArrayList<String>(speciesDescendantsAccessions));
         solrCluster.setSpeciesAscendantsNames(new ArrayList<String>(speciesDescendantsNames));
 
-        // modifications
-        solrCluster.setModificationNames(new ArrayList<String>(modificationNames));
-        solrCluster.setModificationAccessions(new ArrayList<String>(modificationAccessions));
 
         // consensus spectrum
         setConsensusSpectrum(solrCluster, clusterDetail);

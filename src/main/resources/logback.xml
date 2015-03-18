@@ -5,7 +5,7 @@
     </contextListener>
 
     <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-        <file>log/psm_indexer.log</file>
+        <file>log/cluster_indexer.log</file>
 
         <encoder>
             <pattern>%msg%n</pattern>
