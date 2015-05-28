@@ -139,7 +139,6 @@ public class ClusterIndexerDB implements IClusterIndexer {
     }
 
     private SolrCluster asSolrCluster(Long clusterId) {
-
         String projectAccession;
         String assayAccession;
         ClusterDetail clusterDetail;
@@ -227,10 +226,10 @@ public class ClusterIndexerDB implements IClusterIndexer {
         solrCluster.setSpeciesNames(new ArrayList<String>(speciesNames));
         solrCluster.setSpeciesAccessions(new ArrayList<String>(speciesAccessions));
 
+
         //TODO Review this part
         for (int i = 0; i < speciesAccessions.size(); i++) {
             String speciesAccession = solrCluster.getSpeciesAccessions().get(i);
-            String speciesName = solrCluster.getSpeciesNames().get(i);
             List<OntologyTerm> relativeSpecies = ontologyTermSearchService.findAllByDescendant(speciesAccession);
             for (OntologyTerm relativeOntologyTerm : relativeSpecies) {
 
@@ -239,8 +238,9 @@ public class ClusterIndexerDB implements IClusterIndexer {
             }
 
             speciesDescendantsAccessions.add(speciesAccession);
-            speciesDescendantsNames.add(speciesName);
         }
+
+        speciesDescendantsNames.addAll(solrCluster.getSpeciesNames());
 
         solrCluster.setSpeciesAscendantsAccessions(new ArrayList<String>(speciesDescendantsAccessions));
         solrCluster.setSpeciesAscendantsNames(new ArrayList<String>(speciesDescendantsNames));
