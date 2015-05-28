@@ -149,7 +149,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         Set<String> speciesNames = new LinkedHashSet<String>();
         Set<String> speciesAccessions = new LinkedHashSet<String>();
 
-        Set<String> pepSequences = new HashSet<String>();
+        String highestRationPeptideSequence = null;
         Set<String> proteinAccs = new HashSet<String>();
 
         Set<String> speciesDescendantsNames = new LinkedHashSet<String>();
@@ -179,7 +179,7 @@ public class ClusterIndexerDB implements IClusterIndexer {
         for (ClusteredPSMDetail clusteredPSMDetail : clusteredPSMSummaries) {
             if (clusteredPSMDetail.getRank() == 1.1f) {
                 PSMDetail psmDetail = clusteredPSMDetail.getPsmDetail();
-                pepSequences.add(psmDetail.getSequence());
+                highestRationPeptideSequence = psmDetail.getSequence();
                 // modifications
                 Set<ModificationProvider> modifications = new HashSet<ModificationProvider>();
                 for (ModificationProvider modification : psmDetail.getModifications()) {
@@ -212,12 +212,10 @@ public class ClusterIndexerDB implements IClusterIndexer {
             }
         }
 
-        List<String> highestRationProteinAccessions = new LinkedList<String>();
-        highestRationProteinAccessions.addAll(proteinAccs);
-        solrCluster.setHighestRatioProteinAccessions(highestRationProteinAccessions);
-        List<String> highestRationPeptideSequences = new LinkedList<String>();
-        highestRationPeptideSequences.addAll(pepSequences);
-        solrCluster.setHighestRatioPepSequences(highestRationPeptideSequences);
+        List<String> highestRatioProteinAccessions = new LinkedList<String>();
+        highestRatioProteinAccessions.addAll(proteinAccs);
+        solrCluster.setHighestRatioProteinAccessions(highestRatioProteinAccessions);
+        solrCluster.setHighestRatioPepSequence(highestRationPeptideSequence);
         solrCluster.setProjectAssays(projectAssays);
         solrCluster.setProjects(new ArrayList<String>(projects));
         solrCluster.setClusterQuality(clusterDetail.getQuality().toString());

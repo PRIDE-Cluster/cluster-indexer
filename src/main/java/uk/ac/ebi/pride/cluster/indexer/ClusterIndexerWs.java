@@ -112,9 +112,7 @@ public class ClusterIndexerWs implements IClusterIndexer {
         SolrCluster solrCluster = new SolrCluster();
 
         solrCluster.setId(Long.parseLong(cluster.id));
-        List<String> highestRatioPepSequences = new LinkedList<String>();
-        highestRatioPepSequences.add(cluster.peptideSequence);
-        solrCluster.setHighestRatioPepSequences(highestRatioPepSequences);
+        solrCluster.setHighestRatioPepSequence(cluster.peptideSequence);
         List<String> highestRatioProteinAccessions = new LinkedList<String>();
         highestRatioProteinAccessions.add(cluster.proteinAccession);
         solrCluster.setHighestRatioProteinAccessions(highestRatioProteinAccessions);
