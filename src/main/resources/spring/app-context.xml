@@ -59,6 +59,9 @@
         <constructor-arg value="#{ solrClusterRepositoryFactory.create() }"/>
     </bean>
 
+    <bean id="synonymService" class="uk.ac.ebi.pride.cluster.search.service.SynonymServiceFactory" factory-method="getInstanceFromInputStream">
+        <constructor-arg value="classpath:solr/collection1/conf/synonyms.txt"/>
+    </bean>
 
     <bean class="uk.ac.ebi.pride.spectracluster.repo.dao.cluster.ClusterReader" id="clusterReaderDao">
         <constructor-arg ref="clusterDataSource"/>

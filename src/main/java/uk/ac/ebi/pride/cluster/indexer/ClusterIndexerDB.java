@@ -9,6 +9,7 @@ import uk.ac.ebi.pride.archive.ontology.search.service.OntologyTermSearchService
 import uk.ac.ebi.pride.cluster.search.model.SolrCluster;
 import uk.ac.ebi.pride.cluster.search.service.IClusterIndexService;
 import uk.ac.ebi.pride.cluster.search.service.IClusterSearchService;
+import uk.ac.ebi.pride.cluster.search.service.ISynonymService;
 import uk.ac.ebi.pride.cluster.search.util.LowResUtils;
 import uk.ac.ebi.pride.spectracluster.repo.dao.cluster.IClusterReadDao;
 import uk.ac.ebi.pride.spectracluster.repo.model.*;
@@ -28,21 +29,24 @@ public class ClusterIndexerDB implements IClusterIndexer {
 
     private static Logger logger = LoggerFactory.getLogger(ClusterIndexerDB.class);
 
-    private IClusterSearchService clusterSearchService;
-    private IClusterIndexService clusterIndexService;
-    private IClusterReadDao clusterReadDao;
-    private OntologyTermSearchService ontologyTermSearchService;
+    private final IClusterSearchService clusterSearchService;
+    private final IClusterIndexService clusterIndexService;
+    private final IClusterReadDao clusterReadDao;
+    private final OntologyTermSearchService ontologyTermSearchService;
+    private final ISynonymService synonymService;
     private int lowResSize = 20;
 
     public ClusterIndexerDB(IClusterSearchService clusterSearchService,
                             IClusterIndexService clusterIndexService,
                             IClusterReadDao clusterReadDao,
                             OntologyTermSearchService ontologyTermSearchService,
+                            ISynonymService synonymService,
                             int lowResSize) {
         this.clusterSearchService = clusterSearchService;
         this.clusterIndexService = clusterIndexService;
         this.clusterReadDao = clusterReadDao;
         this.ontologyTermSearchService = ontologyTermSearchService;
+        this.synonymService = synonymService;
         this.lowResSize = lowResSize;
     }
 
@@ -192,6 +196,15 @@ public class ClusterIndexerDB implements IClusterIndexer {
             }
         }
 
+        // modification synonyms
+        Set<String> modificationSynonyms = new HashSet<String>();
+        for (ModificationProvider modificationProvider : solrCluster.getModifications()) {
+            String accession = modificationProvider.getAccession();
+            Collection<String> synonyms = synonymService.getSynonyms(accession);
+            modificationSynonyms.addAll(synonyms);
+        }
+        solrCluster.setModificationSynonyms(new ArrayList<String>(modificationSynonyms));
+
         assayDetails = clusterDetail.getAssayDetails();
 
         //Processing assay information
@@ -223,7 +236,6 @@ public class ClusterIndexerDB implements IClusterIndexer {
         // Expand species
         solrCluster.setSpeciesNames(new ArrayList<String>(speciesNames));
         solrCluster.setSpeciesAccessions(new ArrayList<String>(speciesAccessions));
-
 
         //TODO Review this part
         for (int i = 0; i < speciesAccessions.size(); i++) {
