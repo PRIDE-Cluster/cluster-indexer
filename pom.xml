@@ -40,6 +40,7 @@
     </organization>
 
     <properties>
+        <project.build.finalName>${project.artifactId}-${project.version}</project.build.finalName>
         <ontology.index.search.version>0.1.1</ontology.index.search.version>
         <cluster.search.version>0.1.1-SNAPSHOT</cluster.search.version>
         <cluster-ws-client.version>0.1.0-SNAPSHOT</cluster-ws-client.version>

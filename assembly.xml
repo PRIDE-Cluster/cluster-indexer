@@ -25,6 +25,7 @@
             <!--<outputDirectory>${assembly.dir}</outputDirectory>-->
             <outputDirectory>/</outputDirectory>
         </fileSet>
+
         <fileSet>
             <directory>${project.basedir}</directory>
             <outputDirectory>log</outputDirectory>
@@ -32,11 +33,14 @@
                 <exclude>**/*</exclude>
             </excludes>
         </fileSet>
-        <!--<fileSet>-->
-        <!--<directory>${project.basedir}/script</directory>-->
-        <!--&lt;!&ndash;<outputDirectory>${assembly.dir}</outputDirectory>&ndash;&gt;-->
-        <!--<outputDirectory>/</outputDirectory>-->
-        <!--<filtered>true</filtered>-->
-        <!--</fileSet>-->
+
+        <fileSet>
+            <directory>${project.basedir}/scripts</directory>
+            <includes>
+                <include>**/*</include>
+            </includes>
+            <outputDirectory>/</outputDirectory>
+            <filtered>true</filtered>
+        </fileSet>
     </fileSets>
 </assembly>
