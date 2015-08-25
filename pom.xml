@@ -16,6 +16,12 @@
     <version>0.1.1-SNAPSHOT</version>
     <name>cluster-indexer</name>
 
+    <!--
+        To build this project, you need the following two profiles:
+            1. db-pride-repo-pridepro   database url configuration
+            2. db-pride-repo-pridecluster-user  database credential
+            3. pride-cluster-solr-cores-prod  solr configuration
+    -->
 
     <licenses>
         <license>
